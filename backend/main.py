@@ -44,6 +44,40 @@ target_names = ['DR', 'ARMD', 'MH', 'DN', 'MYA', 'BRVO', 'TSLN', 'ERM', 'LS', 'M
                 'PRH', 'MNF', 'HR', 'CRAO', 'TD', 'CME', 'PTCR', 'CF', 'VH', 'MCA', 
                 'VS', 'BRAO', 'PLQ', 'HPED', 'CL']
 
+# --- DISEASE METADATA (SEVERITY, REFERRAL, URGENCY) ---
+disease_metadata = {
+    'DR': {'severity': 'High', 'specialist': 'Retina Specialist', 'urgency': 'Urgent', 'referral_timeframe': '1-2 weeks'},
+    'ARMD': {'severity': 'High', 'specialist': 'Retina Specialist', 'urgency': 'Important', 'referral_timeframe': '2-4 weeks'},
+    'MH': {'severity': 'High', 'specialist': 'Vitreoretinal Surgeon', 'urgency': 'Urgent', 'referral_timeframe': '1-2 weeks'},
+    'BRVO': {'severity': 'High', 'specialist': 'Retina Specialist', 'urgency': 'Urgent', 'referral_timeframe': '1 week'},
+    'CRVO': {'severity': 'Critical', 'specialist': 'Retina Specialist/Neuro-ophthalmologist', 'urgency': 'Emergency', 'referral_timeframe': '24-48 hours'},
+    'AION': {'severity': 'Critical', 'specialist': 'Neuro-ophthalmologist', 'urgency': 'Emergency', 'referral_timeframe': '24-48 hours'},
+    'CRAO': {'severity': 'Critical', 'specialist': 'Emergency/Retina Specialist', 'urgency': 'Emergency', 'referral_timeframe': 'Immediate'},
+    'CSR': {'severity': 'Medium', 'specialist': 'Retina Specialist', 'urgency': 'Important', 'referral_timeframe': '2-3 weeks'},
+    'CME': {'severity': 'Medium', 'specialist': 'Retina Specialist', 'urgency': 'Important', 'referral_timeframe': '1-2 weeks'},
+    'ODC': {'severity': 'Medium', 'specialist': 'Glaucoma Specialist', 'urgency': 'Important', 'referral_timeframe': '2-4 weeks'},
+    'ODP': {'severity': 'Medium', 'specialist': 'Neuro-ophthalmologist', 'urgency': 'Routine', 'referral_timeframe': '4-6 weeks'},
+    'ODE': {'severity': 'High', 'specialist': 'Neuro-ophthalmologist', 'urgency': 'Important', 'referral_timeframe': '1-2 weeks'},
+    'RP': {'severity': 'High', 'specialist': 'Retina Specialist/Genetic Counselor', 'urgency': 'Important', 'referral_timeframe': '2-4 weeks'},
+    'RVH': {'severity': 'Medium', 'specialist': 'Retina Specialist', 'urgency': 'Important', 'referral_timeframe': '1-2 weeks'},
+    'ERM': {'severity': 'Low', 'specialist': 'General Ophthalmologist', 'urgency': 'Routine', 'referral_timeframe': '4-8 weeks'},
+    'TSLN': {'severity': 'Low', 'specialist': 'General Ophthalmologist', 'urgency': 'Routine', 'referral_timeframe': 'Monitoring only'},
+    'HPED': {'severity': 'High', 'specialist': 'Retina Specialist', 'urgency': 'Urgent', 'referral_timeframe': '1-2 weeks'},
+    'PRH': {'severity': 'High', 'specialist': 'Retina Specialist', 'urgency': 'Urgent', 'referral_timeframe': '1 week'},
+    'DN': {'severity': 'Low', 'specialist': 'General Ophthalmologist', 'urgency': 'Routine', 'referral_timeframe': '4-8 weeks'},
+    'MYA': {'severity': 'Low', 'specialist': 'Optometrist/Refractive Surgeon', 'urgency': 'Routine', 'referral_timeframe': '2-4 weeks'},
+    'CB': {'severity': 'Medium', 'specialist': 'Retina Specialist', 'urgency': 'Important', 'referral_timeframe': '2-4 weeks'},
+}
+
+def get_disease_metadata(disease_name):
+    """Get severity, specialist recommendation, and urgency for a disease."""
+    return disease_metadata.get(disease_name, {
+        'severity': 'Medium',
+        'specialist': 'General Ophthalmologist',
+        'urgency': 'Routine',
+        'referral_timeframe': '4-6 weeks'
+    })
+
 # --- 3. AI MODEL LOADING ---
 device = torch.device("cpu")
 model = models.densenet121(weights=None)
@@ -870,7 +904,44 @@ def get_disease_report(disease_name):
     else:
         return generate_fallback_report(disease_name)
 
-# --- 5. GRAD-CAM HEATMAP LOGIC ---
+# --- 5. IMAGE QUALITY ASSESSMENT ---
+def assess_image_quality(pil_img):
+    """Assess image quality and return quality score (0-100) and quality level."""
+    img_array = np.array(pil_img)
+    
+    # Check resolution
+    height, width = img_array.shape[:2]
+    min_dimension = min(height, width)
+    resolution_score = min(100, (min_dimension / 224) * 100)
+    
+    # Check blur using Laplacian variance
+    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    blur_score = min(100, cv2.Laplacian(gray, cv2.CV_64F).var() * 2)
+    
+    # Check brightness 
+    brightness = np.mean(cv2.cvtColor(img_array, cv2.COLOR_RGB2LAB)[:, :, 0])
+    # Optimal brightness is around 50-100 in LAB space
+    brightness_score = 100 - abs(brightness - 75) / 75 * 100
+    brightness_score = max(0, min(100, brightness_score))
+    
+    # Check contrast
+    contrast = np.std(gray)
+    contrast_score = min(100, (contrast / 50) * 100)
+    
+    # Overall quality score (weighted average)
+    overall_quality = (resolution_score * 0.25 + blur_score * 0.35 + 
+                      brightness_score * 0.2 + contrast_score * 0.2)
+    
+    if overall_quality >= 80:
+        quality_level = "Excellent"
+    elif overall_quality >= 60:
+        quality_level = "Good"
+    elif overall_quality >= 40:
+        quality_level = "Fair"
+    else:
+        quality_level = "Poor"
+    
+    return int(overall_quality), quality_level
 def generate_gradcam(input_tensor, model):
     input_tensor.requires_grad = True
     
@@ -928,7 +999,10 @@ async def diagnose(file: UploadFile = File(...)):
         pil_img = Image.open(BytesIO(img_bytes)).convert('RGB')
         timings['image_loading'] = round(time.time() - load_start, 3)
         
-        # 2. Preprocessing
+        # 2. Image Quality Assessment
+        quality_score, quality_level = assess_image_quality(pil_img)
+        
+        # 3. Preprocessing
         prep_start = time.time()
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -938,18 +1012,21 @@ async def diagnose(file: UploadFile = File(...)):
         input_tensor = transform(pil_img).unsqueeze(0)
         timings['preprocessing'] = round(time.time() - prep_start, 3)
 
-        # 3. Generate Results (Model Inference + Grad-CAM)
+        # 4. Generate Results (Model Inference + Grad-CAM)
         inference_start = time.time()
         heatmap, class_idx, top_3 = generate_gradcam(input_tensor, model)
         disease = target_names[class_idx]
         timings['model_inference_and_gradcam'] = round(time.time() - inference_start, 3)
 
-        # 4. Get Medical Report (Using High-Confidence Database)
+        # 5. Get Medical Report (Using High-Confidence Database)
         report_start = time.time()
         report = get_disease_report(disease)
         timings['report_generation'] = round(time.time() - report_start, 3)
+        
+        # 6. Get Disease Metadata (Severity, Referral)
+        metadata = get_disease_metadata(disease)
 
-        # 5. Heatmap Processing
+        # 7. Heatmap Processing
         heatmap_start = time.time()
         open_cv_img = np.array(pil_img)
         open_cv_img = cv2.cvtColor(open_cv_img, cv2.COLOR_RGB2BGR)
@@ -967,7 +1044,13 @@ async def diagnose(file: UploadFile = File(...)):
             "disease": disease,
             "top_3": top_3,
             "report": report,
-            "heatmap": f"data:image/jpeg;base64,{heatmap_b64}"
+            "heatmap": f"data:image/jpeg;base64,{heatmap_b64}",
+            "quality_score": quality_score,
+            "quality_level": quality_level,
+            "severity": metadata['severity'],
+            "specialist": metadata['specialist'],
+            "urgency": metadata['urgency'],
+            "referral_timeframe": metadata['referral_timeframe']
         }
     except Exception as e:
         traceback.print_exc()

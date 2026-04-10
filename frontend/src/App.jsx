@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Upload, FileText, AlertCircle, CheckCircle, Activity, Eye, Edit2, Download, Save, X } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Activity, Eye, Edit2, Download, Save, X, AlertTriangle, Clock, Stethoscope, BarChart3 } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -59,26 +59,71 @@ function App() {
 
   const downloadReport = () => {
     const reportText = editMode ? editedReport : result.report;
-    const fullReport = `MEDICAL DIAGNOSTIC REPORT
+    const fullReport = `═══════════════════════════════════════════════════════════════════════════════
+COMPREHENSIVE RETINAL DIAGNOSTIC REPORT
+═══════════════════════════════════════════════════════════════════════════════
 
-Detected Condition: ${result.disease}
+REPORT GENERATED: ${new Date().toLocaleString()}
 
-TOP 3 PREDICTIONS:
-${result.top_3.map((item, idx) => `${idx + 1}. ${item.disease}: ${item.probability}`).join('\n')}
+───────────────────────────────────────────────────────────────────────────────
+CLINICAL FINDINGS
+───────────────────────────────────────────────────────────────────────────────
 
-================================
-MEDICAL REPORT:
-================================
+DETECTED CONDITION: ${result.disease}
+
+IMAGE QUALITY ASSESSMENT:
+  • Quality Score: ${result.quality_score}/100
+  • Quality Level: ${result.quality_level}
+
+SEVERITY & URGENCY ASSESSMENT:
+  • Severity Level: ${result.severity}
+  • Urgency: ${result.urgency}
+  • Recommended Specialist: ${result.specialist}
+  • Suggested Referral Timeframe: ${result.referral_timeframe}
+
+TOP 3 DIAGNOSTIC PREDICTIONS:
+${result.top_3.map((item, idx) => `  ${idx + 1}. ${item.disease}: ${item.probability}`).join('\n')}
+
+───────────────────────────────────────────────────────────────────────────────
+DETAILED MEDICAL REPORT
+───────────────────────────────────────────────────────────────────────────────
 
 ${reportText}
 
-================================
-DISCLAIMER:
-This is an AI-assisted preliminary assessment and should not be used as a substitute for professional medical evaluation. Please consult with a qualified ophthalmologist for definitive diagnosis and treatment plans.`;
+───────────────────────────────────────────────────────────────────────────────
+RECOMMENDED ACTIONS & FOLLOW-UP
+───────────────────────────────────────────────────────────────────────────────
+
+SPECIALIST REFERRAL:
+  • Type: ${result.specialist}
+  • Priority Level: ${result.urgency}
+  • Recommended Timeframe: ${result.referral_timeframe}
+
+ACTION ITEMS:
+  1. Schedule appointment with recommended specialist
+  2. Bring this report and retinal images to all appointments
+  3. Maintain regular eye health monitoring
+  4. Report any changes in vision immediately
+  5. Follow specialist recommendations for treatment
+
+───────────────────────────────────────────────────────────────────────────────
+IMPORTANT DISCLAIMER
+───────────────────────────────────────────────────────────────────────────────
+
+This is an AI-assisted preliminary assessment and should NOT be used as a substitute 
+for professional medical evaluation. The analysis is based on fundus photography and 
+should be confirmed by a qualified ophthalmologist through comprehensive clinical 
+examination including dilated eye exam, OCT imaging, and other diagnostic modalities 
+as appropriate.
+
+Always consult with a licensed eye care professional for final diagnosis and 
+treatment planning.
+
+═══════════════════════════════════════════════════════════════════════════════`;
 
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(fullReport));
-    element.setAttribute('download', `Report_${result.disease}_${new Date().getTime()}.txt`);
+    element.setAttribute('download', `Retinal_Report_${result.disease}_${new Date().getTime()}.txt`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -155,12 +200,29 @@ This is an AI-assisted preliminary assessment and should not be used as a substi
 
         {result && (
           <div className="results-container">
+            {result.quality_score < 60 && (
+              <div className="quality-warning glass-panel">
+                <AlertTriangle size={20} />
+                <div className="warning-content">
+                  <strong>Image Quality: {result.quality_level}</strong>
+                  <p>Quality Score {result.quality_score}/100 - Consider retaking the image for more accurate results</p>
+                </div>
+              </div>
+            )}
+
             <div className="diagnosis-card glass-panel">
               <div className="card-header">
-                <h2>Diagnostic Results</h2>
-                <div className="status-badge success">
-                  <CheckCircle size={16} />
-                  <span>Analysis Complete</span>
+                <div>
+                  <h2>Diagnostic Results</h2>
+                </div>
+                <div className="header-badges">
+                  <div className={`severity-badge severity-${result.severity.toLowerCase()}`}>
+                    {result.severity}
+                  </div>
+                  <div className={`status-badge success`}>
+                    <CheckCircle size={16} />
+                    <span>Complete</span>
+                  </div>
                 </div>
               </div>
 
@@ -203,6 +265,69 @@ This is an AI-assisted preliminary assessment and should not be used as a substi
               </div>
             </div>
 
+            <div className="referral-card glass-panel">
+              <div className="card-header">
+                <Stethoscope size={20} />
+                <h3>Clinical Recommendation & Referral</h3>
+              </div>
+              
+              <div className="referral-grid">
+                <div className="referral-item">
+                  <div className="referral-icon urgent">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <div className="referral-content">
+                    <div className="referral-label">Urgency Level</div>
+                    <div className={`referral-value urgency-${result.urgency.toLowerCase()}`}>
+                      {result.urgency}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="referral-item">
+                  <div className="referral-icon specialist">
+                    <Stethoscope size={24} />
+                  </div>
+                  <div className="referral-content">
+                    <div className="referral-label">Recommended Specialist</div>
+                    <div className="referral-value">{result.specialist}</div>
+                  </div>
+                </div>
+
+                <div className="referral-item">
+                  <div className="referral-icon timeframe">
+                    <Clock size={24} />
+                  </div>
+                  <div className="referral-content">
+                    <div className="referral-label">Suggested Timeframe</div>
+                    <div className="referral-value">{result.referral_timeframe}</div>
+                  </div>
+                </div>
+
+                <div className="referral-item">
+                  <div className="referral-icon quality">
+                    <BarChart3 size={24} />
+                  </div>
+                  <div className="referral-content">
+                    <div className="referral-label">Image Quality</div>
+                    <div className="referral-value">{result.quality_level} ({result.quality_score}/100)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="referral-action">
+                <div className="action-box">
+                  <h4>Next Steps:</h4>
+                  <ul>
+                    <li>Schedule appointment with {result.specialist}</li>
+                    <li>Bring this report and retinal images to consultation</li>
+                    <li>Prepare insurance information and medical history</li>
+                    <li>Follow any pre-visit instructions from specialist's office</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             <div className="report-card glass-panel">
               <div className="card-header">
                 <FileText size={20} />
@@ -235,7 +360,7 @@ This is an AI-assisted preliminary assessment and should not be used as a substi
                     title="Download report as text"
                   >
                     <Download size={16} />
-                    Download
+                    Download Report
                   </button>
                 </div>
               </div>

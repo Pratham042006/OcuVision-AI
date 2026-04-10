@@ -658,10 +658,10 @@ main {
 
 .visual-item img {
   width: 100%;
-  height: 200px;
+  height: 400px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #2a5298;
 }
 
 /* ========== REPORT CARD ========== */
@@ -767,8 +767,378 @@ main {
   background: #2a5298;
 }
 
+/* ========== ANIMATIONS ========== */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ========== QUALITY WARNING ========== */
+.quality-warning {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(240, 170, 50, 0.15);
+  border: 1px solid rgba(240, 170, 50, 0.4);
+  color: #ffb366;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.quality-warning svg {
+  flex-shrink: 0;
+  color: #ffb366;
+}
+
+.warning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.warning-content strong {
+  color: #ffe0b3;
+  font-size: 15px;
+}
+
+.warning-content p {
+  color: #d4a574;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ========== SEVERITY BADGES ========== */
+.header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.severity-badge {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: fadeInScale 0.4s ease-out;
+}
+
+.severity-badge.severity-low {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  border: 1px solid #81c784;
+}
+
+.severity-badge.severity-medium {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
+  border: 1px solid #ffb74d;
+}
+
+.severity-badge.severity-high {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ef5350;
+  border: 1px solid #ef5350;
+}
+
+.severity-badge.severity-critical {
+  background: rgba(233, 30, 99, 0.2);
+  color: #ec407a;
+  border: 1px solid #ec407a;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #2e7d32;
+  animation: fadeInScale 0.4s ease-out;
+}
+
+/* ========== REFERRAL CARD ========== */
+.referral-card {
+  padding: 32px;
+  background: rgba(26, 58, 82, 0.7) !important;
+  animation: slideIn 0.5s ease-out;
+}
+
+.referral-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.referral-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(42, 82, 152, 0.2);
+  border: 1px solid rgba(90, 159, 212, 0.3);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.referral-item:hover {
+  background: rgba(42, 82, 152, 0.35);
+  border-color: rgba(90, 159, 212, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.referral-icon {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.referral-icon.urgent {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ef5350;
+}
+
+.referral-icon.specialist {
+  background: rgba(63, 81, 181, 0.2);
+  color: #5a9fd4;
+}
+
+.referral-icon.timeframe {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
+}
+
+.referral-icon.quality {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+.referral-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.referral-label {
+  font-size: 12px;
+  color: #a0b0c8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.referral-value {
+  font-size: 14px;
+  color: #e0e8f0;
+  font-weight: 600;
+}
+
+.referral-value.urgency-emergency {
+  color: #ff6b6b;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.referral-value.urgency-urgent {
+  color: #ef5350;
+}
+
+.referral-value.urgency-important {
+  color: #ffb74d;
+}
+
+.referral-value.urgency-routine {
+  color: #81c784;
+}
+
+.referral-action {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(90, 159, 212, 0.1);
+  border: 1px solid rgba(90, 159, 212, 0.2);
+  border-radius: 10px;
+}
+
+.action-box h4 {
+  color: #5a9fd4;
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.action-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-box li {
+  color: #d0d8e0;
+  font-size: 13px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.action-box li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #81c784;
+  font-weight: bold;
+}
+
+/* ========== CARD HOVER EFFECTS ========== */
+.diagnosis-card,
+.referral-card,
+.report-card {
+  transition: all 0.3s ease;
+}
+
+.diagnosis-card:hover,
+.referral-card:hover,
+.report-card:hover {
+  box-shadow: 0 12px 40px rgba(90, 159, 212, 0.15);
+  border-color: rgba(90, 159, 212, 0.4);
+}
+
+/* ========== BUTTON ANIMATIONS ========== */
+.btn-primary {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: left 0.4s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(30, 60, 114, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== CONFIDENCE BAR ANIMATION ========== */
+.conf-bar-fill {
+  animation: slideInBar 0.8s ease-out;
+}
+
+@keyframes slideInBar {
+  from {
+    width: 0 !important;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========== UPLOAD ZONE ENHANCEMENT ========== */
+.upload-zone {
+  transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+  transform: scale(1.02);
+}
+
+.upload-icon {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* ========== TEXT AREA ENHANCEMENT ========== */
+.report-textarea {
+  transition: all 0.3s ease;
+}
+
+.report-textarea:hover {
+  border-color: #7aafdd;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
+  .referral-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-badges {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .severity-badge,
+  .status-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .report-controls {
+    flex-wrap: wrap;
+  }
+}
   .hero h1 {
     font-size: 36px;
   }
@@ -1064,8 +1434,10 @@ input[type="file"] {
 
 .visual-item img {
   width: 100%;
-  border-radius: var(--radius);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #2a5298;
 }
 
 .report-card {
