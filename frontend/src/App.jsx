@@ -6,8 +6,6 @@ import HealthDashboard from './HealthDashboard';
 import './App.css';
 
 function App() {
-  const [patientId, setPatientId] = useState(null);
-  const [patientInput, setPatientInput] = useState('');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -54,7 +52,7 @@ function App() {
     formData.append('file', file);
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/diagnose', formData, {
+      const response = await axios.post(API_URL + '/diagnose', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
