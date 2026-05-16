@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { Upload, FileText, AlertCircle, CheckCircle, Activity, Eye, Edit2, Download, Save, X, AlertTriangle, Clock, Stethoscope, BarChart3 } from 'lucide-react';
+import RetinalAR from './RetinalAR';
+import HealthDashboard from './HealthDashboard';
 import './App.css';
 
 function App() {
+  const [patientId, setPatientId] = useState(null);
+  const [patientInput, setPatientInput] = useState('');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -11,6 +15,22 @@ function App() {
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editedReport, setEditedReport] = useState('');
+  const [activeTab, setActiveTab] = useState('report'); // 'report' or 'ar'
+
+  const handleStartSession = () => {
+    if (patientInput.trim()) {
+      setPatientId(patientInput.trim());
+      setPatientInput('');
+    }
+  };
+
+  const handleChangePatient = () => {
+    setPatientId(null);
+    setFile(null);
+    setPreview(null);
+    setResult(null);
+    setError(null);
+  };
 
 
   const handleFileChange = (e) => {
@@ -132,20 +152,73 @@ treatment planning.
 
   return (
     <div className="app-container">
-      <header className="hero">
-        <div className="badge">
-          <Activity size={16} className="icon-pulse" />
-          <span>AI-Powered Diagnostics</span>
-        </div>
-        <h1>
-          Retinal <span className="text-gradient">Scan Analysis</span>
-        </h1>
-        <p className="subtitle">
-          Hospital-grade retinal diagnosis system
-        </p>
-      </header>
+      {!patientId ? (
+        <div className="patient-login">
+          <div className="login-card glass-panel">
+            <div className="login-header">
+              <Eye size={48} className="login-icon" />
+              <h1>Retinal Scan Analysis</h1>
+              <p className="login-subtitle">Hospital-grade AI Diagnostics</p>
+            </div>
 
-      <main>
+            <div className="login-body">
+              <div className="form-group">
+                <label htmlFor="patientId">Patient ID / Medical Record Number</label>
+                <input
+                  id="patientId"
+                  type="text"
+                  placeholder="e.g., PAT-2026-001234 or 12345"
+                  value={patientInput}
+                  onChange={(e) => setPatientInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleStartSession()}
+                  className="patient-input"
+                />
+              </div>
+
+              <button 
+                onClick={handleStartSession}
+                disabled={!patientInput.trim()}
+                className="btn-primary start-btn"
+              >
+                <Activity size={18} />
+                Start Session
+              </button>
+
+              <div className="login-info">
+                <p>ℹ️ Enter a unique patient identifier to maintain separate scan history for each patient. All scans will be stored under this ID.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <header className="patient-header-bar">
+            <div className="patient-info">
+              <Eye size={20} />
+              <span className="patient-id">Patient ID: <strong>{patientId}</strong></span>
+            </div>
+            <button 
+              onClick={handleChangePatient}
+              className="btn-secondary switch-patient"
+            >
+              Switch Patient
+            </button>
+          </header>
+
+          <header className="hero">
+            <div className="badge">
+              <Activity size={16} className="icon-pulse" />
+              <span>AI-Powered Diagnostics</span>
+            </div>
+            <h1>
+              Retinal <span className="text-gradient">Scan Analysis</span>
+            </h1>
+            <p className="subtitle">
+              Hospital-grade retinal diagnosis system
+            </p>
+          </header>
+
+          <main>
         <div className="upload-section glass-panel">
           {!preview ? (
             <div className="upload-placeholder">
@@ -217,7 +290,7 @@ treatment planning.
                 </div>
                 <div className="header-badges">
                   <div className={`severity-badge severity-${result.severity.toLowerCase()}`}>
-                    {result.severity}
+                    {result.severity} ({result.damage_percentage}% damage)
                   </div>
                   <div className={`status-badge success`}>
                     <CheckCircle size={16} />
@@ -377,9 +450,31 @@ treatment planning.
                 </div>
               )}
             </div>
+
+            <div className="ar-viewer-card glass-panel">
+              <div className="card-header">
+                <Eye size={20} style={{color: '#4a90e2'}} />
+                <h3>3D Retinal Digital Twin</h3>
+                <div className="ar-badge">
+                  <span>🔬 AR</span>
+                </div>
+              </div>
+              <RetinalAR 
+                heatmapImage={result.heatmap} 
+                diseaseInfo={{
+                  disease: result.disease,
+                  severity: result.severity,
+                  confidence: result.top_3[0]?.probability || 'N/A'
+                }}
+              />
+            </div>
+
+            <HealthDashboard currentResult={result} patientId={patientId} />
           </div>
         )}
-      </main>
+          </main>
+        </>
+      )}
     </div>
   );
 }

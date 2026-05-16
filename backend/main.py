@@ -942,6 +942,57 @@ def assess_image_quality(pil_img):
         quality_level = "Poor"
     
     return int(overall_quality), quality_level
+
+def calculate_damage_percentage(heatmap):
+    """
+    Calculate the percentage of the retina that shows damage/abnormality based on heatmap.
+    Uses a percentile-based approach: top 35% of pixels (by activation strength) = damaged.
+    
+    This approach is more robust across different heatmap distributions
+    and doesn't depend on absolute threshold values.
+    """
+    # Flatten heatmap
+    flat_heatmap = heatmap.flatten()
+    
+    # Get 65th percentile value (top 35% of pixels)
+    percentile_65 = np.percentile(flat_heatmap, 65)
+    
+    # Count pixels above this threshold
+    damaged_pixels = np.sum(flat_heatmap > percentile_65)
+    total_pixels = len(flat_heatmap)
+    
+    damage_percentage = (damaged_pixels / total_pixels) * 100 if total_pixels > 0 else 0
+    
+    # Scale by average activation intensity to account for strong vs weak activations
+    mean_activation = np.mean(flat_heatmap)
+    damage_percentage = damage_percentage * (mean_activation * 4)  # Scale factor
+    
+    # Cap at 100%
+    damage_percentage = min(damage_percentage, 100)
+    
+    return damage_percentage
+
+def get_severity_from_damage(damage_percentage, disease):
+    """
+    Determine severity based on how much of the retina is damaged.
+    
+    Damage ranges:
+    - 0-20% = Low severity
+    - 20-45% = Medium severity
+    - 45-70% = High severity
+    - 70%+ = Critical severity
+    """
+    if damage_percentage < 20:
+        severity = 'Low'
+    elif damage_percentage < 45:
+        severity = 'Medium'
+    elif damage_percentage < 70:
+        severity = 'High'
+    else:
+        severity = 'Critical'
+    
+    return severity
+
 def generate_gradcam(input_tensor, model):
     input_tensor.requires_grad = True
     
@@ -1023,10 +1074,23 @@ async def diagnose(file: UploadFile = File(...)):
         report = get_disease_report(disease)
         timings['report_generation'] = round(time.time() - report_start, 3)
         
-        # 6. Get Disease Metadata (Severity, Referral)
-        metadata = get_disease_metadata(disease)
+        # 6. Calculate Damage Percentage and Determine Severity
+        damage_percentage = calculate_damage_percentage(heatmap)
+        severity = get_severity_from_damage(damage_percentage, disease)
+        
+        # 7. Get Disease Metadata (Specialist, Urgency, Referral - not severity anymore)
+        disease_meta = get_disease_metadata(disease)
+        
+        # Build metadata with damage-based severity
+        metadata = {
+            'severity': severity,
+            'damage_percentage': round(damage_percentage, 2),
+            'specialist': disease_meta['specialist'],
+            'urgency': disease_meta['urgency'],
+            'referral_timeframe': disease_meta['referral_timeframe']
+        }
 
-        # 7. Heatmap Processing
+        # 8. Heatmap Processing
         heatmap_start = time.time()
         open_cv_img = np.array(pil_img)
         open_cv_img = cv2.cvtColor(open_cv_img, cv2.COLOR_RGB2BGR)
@@ -1048,6 +1112,7 @@ async def diagnose(file: UploadFile = File(...)):
             "quality_score": quality_score,
             "quality_level": quality_level,
             "severity": metadata['severity'],
+            "damage_percentage": metadata['damage_percentage'],
             "specialist": metadata['specialist'],
             "urgency": metadata['urgency'],
             "referral_timeframe": metadata['referral_timeframe']
