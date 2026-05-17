@@ -1,5 +1,6 @@
 services:
   - type: web
     name: eye-scan
-    env: docker
+    runtime: docker
+    plan: free
     healthCheckPath: /api/health
