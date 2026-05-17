@@ -3,4 +3,4 @@ services:
     name: eye-scan
     runtime: docker
     plan: free
-    healthCheckPath: /api/health
+    healthCheckPath: /health

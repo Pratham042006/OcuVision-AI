@@ -1137,7 +1137,9 @@ async def diagnose(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 if FRONTEND_DIST.exists():
-    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+    static_dir = FRONTEND_DIST / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):

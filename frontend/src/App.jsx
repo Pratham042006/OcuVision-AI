@@ -5,7 +5,7 @@ import RetinalAR from './RetinalAR';
 import HealthDashboard from './HealthDashboard';
 import './App.css';
 
-const API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 function App() {
   const [patientId, setPatientId] = useState(null);
