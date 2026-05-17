@@ -1138,7 +1138,7 @@ main {
   .report-controls {
     flex-wrap: wrap;
   }
-}
+
   .hero h1 {
     font-size: 36px;
   }
@@ -2195,5 +2195,4 @@ input[type="file"] {
 
 .switch-patient-btn:active {
   transform: scale(0.98);
-}
 }

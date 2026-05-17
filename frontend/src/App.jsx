@@ -5,7 +5,11 @@ import RetinalAR from './RetinalAR';
 import HealthDashboard from './HealthDashboard';
 import './App.css';
 
+const API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+
 function App() {
+  const [patientId, setPatientId] = useState(null);
+  const [patientInput, setPatientInput] = useState('');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -13,7 +17,6 @@ function App() {
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editedReport, setEditedReport] = useState('');
-  const [activeTab, setActiveTab] = useState('report'); // 'report' or 'ar'
 
   const handleStartSession = () => {
     if (patientInput.trim()) {

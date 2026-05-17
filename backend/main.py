@@ -5,8 +5,11 @@ import numpy as np
 import base64
 import traceback
 import time
+from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from torchvision import models, transforms
 from PIL import Image
 from io import BytesIO
@@ -36,8 +39,11 @@ app.add_middleware(
 )
 
 # --- 2. CONFIGURATION & CONSTANTS ---
-DB_PATH = "./chroma_db"
-MODEL_PATH = 'final_retina_model.pth'
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+DB_PATH = BASE_DIR / "chroma_db"
+MODEL_PATH = BASE_DIR / "final_retina_model.pth"
+FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 target_names = ['DR', 'ARMD', 'MH', 'DN', 'MYA', 'BRVO', 'TSLN', 'ERM', 'LS', 'MS', 
                 'CSR', 'ODC', 'CRVO', 'TV', 'AH', 'ODP', 'ODE', 'ST', 'AION', 'PT', 
                 'RT', 'RS', 'CRS', 'EDN', 'RPEC', 'MHL', 'RP', 'CWS', 'CB', 'ODPM', 
@@ -1038,6 +1044,15 @@ def generate_gradcam(input_tensor, model):
     return heatmap, class_idx, top_3_predictions
 
 # --- 6. ENDPOINTS ---
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
+@app.get("/health")
+async def root_health_check():
+    return {"status": "ok"}
+
+@app.post("/api/diagnose")
 @app.post("/diagnose")
 async def diagnose(file: UploadFile = File(...)):
     try:
@@ -1120,6 +1135,16 @@ async def diagnose(file: UploadFile = File(...)):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+if FRONTEND_DIST.exists():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        requested_path = FRONTEND_DIST / full_path
+        if full_path and requested_path.is_file():
+            return FileResponse(requested_path)
+        return FileResponse(FRONTEND_DIST / "index.html")
 
 # --- 7. WINDOWS SPAWN PROTECTION ---
 if __name__ == "__main__":

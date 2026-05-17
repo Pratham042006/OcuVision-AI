@@ -37,6 +37,7 @@ backend/*.pyc
 
 # Model files (large)
 *.pth
+!backend/final_retina_model.pth
 *.pt
 *.h5
 *.pkl
